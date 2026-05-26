@@ -308,17 +308,17 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
     bktree_size = asizeof.asizeof(bktree_instance) / (1024 * 1024)
     print(bktree_size, bktree_build_time)
 
-    # Containers for aggregated metrics
+    # Define methods to benchmark
     methods = [
         (candidates_dpvs_batch, "DPVS", [dpvs_instance], True),
         (candidates_symspell, "SymSpell", [symspell_instance], False),
         (candidates_norvig, "Norvig", [freq_dict], False),
         (candidates_bktree, "Damerau BK-Tree", [bktree_instance], False),
-        (candidates_damerau_levenshtein, "Damerau-Levenshtein", [], False),
+        #(candidates_damerau_levenshtein, "Damerau-Levenshtein", [], False),    # Too slow for large vocabularies, replaced with BK-Tree which uses the same distance but is indexed
         (candidates_levenshtein, "Levenshtein", [], False),
         (candidates_jaro_winkler, "Jaro-Winkler", [], False),
         (candidates_rapidfuzz, "RapidFuzz", [], False),
-        (candidates_jaccard, "Bigram Jaccard", [], False),
+        #(candidates_jaccard, "Bigram Jaccard", [], False),                     # Too slow for large vocabularies and generally performs poorly
     ]
 
     results = {name: {"top1": [], "top3": [], "top5": [], "time_sec": [], "iters_sec": [], "build_time": [], "build_size": [], "stats": []} for _, name, _, _ in methods}

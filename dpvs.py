@@ -30,21 +30,21 @@ class VectorIndex:
         self.vectors = None
         self.index = None
             
-    def build(self, dict: list[str]):
+    def build(self, vocab: list[str]):
         """
-        Build the FAISS index from a dictionary of strings.
+        Build the FAISS index from the provided vocabulary.
 
         Args:
-            dict (list[str]): A list of strings to vectorize and index.
+            vocab (list[str]): A list of strings to vectorize and index.
         """
-        self.vectors = self._build_dict_vectors(dict)
+        self.vectors = self._build_vocab_vectors(vocab)
         self.index = self._build_faiss_index(metric=faiss.METRIC_L1, ef_construction=self.ef_construction, M=self.M, ef=self.ef)
         
         return self
 
     def save(self, filepath: str="dpvs_index.pkl"):
         """
-        Save the dictionary of words and their corresponding vectors to a file.
+        Save the vector representations and the FAISS index to a file for later use.
 
         Args:
             filepath (str, optional): The path to the file where the index should be saved. Defaults to "dpvs_index.pkl".
@@ -54,8 +54,7 @@ class VectorIndex:
 
     def load(self, filepath: str="dpvs_index.pkl"):
         """
-        Load the dictionary of words and their corresponding vectors from a file,
-        and reconstruct the FAISS index.
+        Load the vector representations from a file and reconstruct the FAISS index.
 
         Args:
             filepath (str, optional): The path to the file from which the index should be loaded. Defaults to "dpvs_index.pkl".
@@ -139,7 +138,7 @@ class VectorIndex:
             ValueError: If the index has not been built yet.
         """
         if self.index is None:
-            raise ValueError("The index has not been built yet. Please call build() with a valid dictionary before lookup.")
+            raise ValueError("The index has not been built yet. Please call the `build` method before performing lookups.")
         
         query_vectors = np.array([self.word_to_vector(q) for q in queries], dtype=np.float32)
         distances, labels = self.index.search(query_vectors, k)
@@ -151,19 +150,19 @@ class VectorIndex:
         
         return results
 
-    def _build_dict_vectors(self, dict: list[str]):
+    def _build_vocab_vectors(self, vocab: list[str]):
         """
-        Vectorize all the valid items in the initialized dictionary.
+        Vectorize all the valid items in the provided vocabulary using the `word_to_vector` method, and stack them into a matrix.
         
         Args:
-            dict (list[str]): A list of strings to vectorize.
+            vocab (list[str]): A list of strings to vectorize.
                                                
         Returns:
             np.ndarray: Matrix containing the vertical stack of the generated vectors.
         """
         vectors = []
         
-        for w in dict:
+        for w in vocab:
             w = w.lower()
             vectors.append(self.word_to_vector(w).astype(np.float32))
 

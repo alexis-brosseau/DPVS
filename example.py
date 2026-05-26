@@ -1,0 +1,19 @@
+import dpvs
+from unicodedata import normalize
+from spellchecker import SpellChecker
+
+if __name__ == "__main__":
+    # Get words from pyspellchecker's frequency dictionary
+    words = list(SpellChecker().word_frequency.dictionary.keys())
+    typos = ["teh", "recieve", "definately", "occured", "publically"]
+    index = dpvs.VectorIndex()
+    
+    print(f"Building vector index for {len(words)} words...")
+    index.build(words)
+    
+    print(f"Looking up candidates...\n")
+    results = index.lookup(typos, k=3)
+    print (results)
+    
+    for query, candidates in results:
+        print(f"Candidates for '{query}': {[f'{words[idx]}: {dist:.2f}' for idx, dist in candidates]}")

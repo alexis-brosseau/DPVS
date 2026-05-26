@@ -7,12 +7,12 @@ A **fast approximate string matching library** that turns words into compact vec
 
 ## Why DPVS?
 
-I built DPVS because I needed to search through a large vocabulary with queries that often contained swapped letters, missing characters, and random insertions. Traditional edit‑distance algorithms were accurate but far too slow for real‑time use. Faster alternatives like SymSpell were quick, but they fell apart on transpositions ("lorem" → "olrem") and deletions ("ipsum" → "isum"). Their memory footprint also exploded with higher error tolerances!
+I built DPVS because I needed to search through a large vocabulary with queries that often contained swapped letters, missing characters, and random insertions. Traditional edit‑distance algorithms were accurate but far too slow for real‑time use. Faster alternatives like SymSpell were quick, but they fell apart on transpositions ("lorem" → "olrem"). Their memory footprint also exploded with higher error tolerances!
 
-DPVS solves both problems:
+DPVS solves these problems:
 
 - **Speed:** FAISS‑powered HNSW index gives you ~14 000 queries per second **on a laptop CPU** (and even faster with a GPU!).
-- **Accuracy:** It correctly catches 98.6 % of transpositions errors and 67.3 % of deletions, often beating SymSpell by a wide margin.
+- **Transpositions Accuracy:** It correctly catches 98.6 % of transpositions errors, beating all other algorithms by a wide margin.
 - **Memory:** The index size grows **linearly** with dictionary size. No exponential blow‑up from edit distance.
 
 If you’ve ever wished for a fuzzy matching distance algorithm that runs at hash‑table speed, DPVS is for you!

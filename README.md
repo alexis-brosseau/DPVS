@@ -21,12 +21,12 @@ If you’ve ever wished for a fuzzy matching distance algorithm that runs at has
 
 ## Features
 
-- **Deterministic vectorisation** – same word always gives the same vector.
-- **All‑in‑one fuzzy search** – handles substitutions, insertions, deletions, and swaps without any extra steps.
-- **FAISS‑backed** – choose between CPU or GPU indexing for massive throughput.
-- **Linear memory** – index size is `O(dictionary_size * vector_size)`, regardless of error tolerance.
-- **Simple API** – build, save, load, and query with a few lines of Python.
-- **Typo‑tolerant, not a typo‑corrector** – use it anywhere you need approximate string matching: record linkage, OCR post‑processing, fuzzy search, or duplicate detection.
+- **Deterministic vectorisation:** Same word always gives the same vector.
+- **All‑in‑one fuzzy search:** Handles substitutions, insertions, deletions, and swaps without any extra steps.
+- **FAISS‑backed:** Choose between CPU or GPU indexing for massive throughput.
+- **Linear memory:** Index size is `O(dictionary_size * vector_size)`, regardless of error tolerance.
+- **Simple API:** Build, save, load, and query with a few lines of Python.
+- **Typo‑tolerant, not a typo‑corrector:** Use it anywhere you need approximate string matching: record linkage, OCR post‑processing, fuzzy search, or duplicate detection.
 
 ---
 

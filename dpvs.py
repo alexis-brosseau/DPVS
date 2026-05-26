@@ -101,7 +101,7 @@ class VectorIndex:
         BOOST = 3.5     # Amplifies the influence of neighboring characters
         
         vec_pre = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on preceding chars (weighted by position and distance)
-        vec_nxt = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on following chars (weighted by position and distance)
+        vec_suc = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on succeeding chars (weighted by position and distance)
         
         for i, ch in enumerate(word, start=1):
             if ch in self.char_to_idx:
@@ -114,12 +114,12 @@ class VectorIndex:
                         vec_pre[idx] += (vec_pos[pre_idx] + BOOST) * (DECAY ** (i - j)) / w_len
 
                 for j in range(i + 1, len(word)):
-                    nxt = word[j]
-                    if nxt in self.char_to_idx:
-                        nxt_idx = self.char_to_idx[nxt]
-                        vec_nxt[idx] += (vec_pos[nxt_idx] + BOOST) * (DECAY ** (j - i)) / w_len
+                    suc = word[j]
+                    if suc in self.char_to_idx:
+                        suc_idx = self.char_to_idx[suc]
+                        vec_suc[idx] += (vec_pos[suc_idx] + BOOST) * (DECAY ** (j - i)) / w_len
         
-        vector = np.concatenate([vec_cnt, vec_pos, vec_pre, vec_nxt])
+        vector = np.concatenate([vec_cnt, vec_pos, vec_pre, vec_suc])
         return vector
     
     def lookup(self, queries: list[str], k: int=5):

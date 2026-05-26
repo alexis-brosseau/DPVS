@@ -289,7 +289,6 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
     t1_build = time()
     symspell_build_time = t1_build - t0_build
     symspell_size = asizeof.asizeof(symspell_instance) / (1024 * 1024)
-    print(symspell_size, symspell_build_time)
 
     # Build DPVS index
     print("\nBuilding DPVS index (preprocessing)...")
@@ -298,7 +297,6 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
     t1_dpvs = time()
     dpvs_build_time = t1_dpvs - t0_dpvs
     dpvs_size = asizeof.asizeof(dpvs_instance) / (1024 * 1024)
-    print(dpvs_size, dpvs_build_time)
 
     print("\nBuilding BK-Tree index (preprocessing)...")
     t0_bktree = time()
@@ -306,7 +304,6 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
     t1_bktree = time()
     bktree_build_time = t1_bktree - t0_bktree
     bktree_size = asizeof.asizeof(bktree_instance) / (1024 * 1024)
-    print(bktree_size, bktree_build_time)
 
     # Define methods to benchmark
     methods = [

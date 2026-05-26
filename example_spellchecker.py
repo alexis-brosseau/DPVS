@@ -12,7 +12,6 @@ if __name__ == "__main__":
     
     print(f"Looking up candidates...\n")
     results = index.lookup(typos, k=3)
-    print (results)
     
     for query, candidates in results:
         print(f"Candidates for '{query}': {[f'{words[idx]}: {dist:.2f}' for idx, dist in candidates]}")

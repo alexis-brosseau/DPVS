@@ -144,7 +144,7 @@ class VectorIndex:
         vecs = [self._word_vector(w) for w in words if w]
         
         if not vecs: 
-            return np.zeros(self.chars_len * 4, dtype=np.float32)
+            raise ValueError("The input sentence does not contain any valid words for vectorization.")
         
         return np.mean(vecs, axis=0)
     

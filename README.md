@@ -7,12 +7,12 @@ A **fast approximate string matching library** that turns words into compact vec
 
 ## Why DPVS?
 
-I built DPVS because I needed to search through a large vocabulary with queries that often contained swapped letters, missing characters, and random insertions. Traditional edit‑distance algorithms were accurate but far too slow for real‑time use. Faster alternatives like SymSpell were quick, but they fell apart on transpositions ("lorem" → "olrem") and deletions ("ipsum" → "isum"). Their memory footprint also exploded with higher error tolerances!
+I built DPVS because I needed to search through a large vocabulary with queries that often contained swapped letters, missing characters, and random insertions. Traditional edit‑distance algorithms were accurate but far too slow for real‑time use. Faster alternatives like SymSpell were quick, but they fell apart on transpositions ("lorem" → "olrem"). Their memory footprint also exploded with higher error tolerances!
 
-DPVS solves both problems:
+DPVS solves these problems:
 
 - **Speed:** FAISS‑powered HNSW index gives you ~14 000 queries per second **on a laptop CPU** (and even faster with a GPU!).
-- **Accuracy:** It correctly catches 98.6 % of transpositions errors and 67.3 % of deletions, often beating SymSpell by a wide margin.
+- **Transpositions Accuracy:** It correctly catches 98.6 % of transpositions errors, beating all other algorithms by a wide margin.
 - **Memory:** The index size grows **linearly** with dictionary size. No exponential blow‑up from edit distance.
 
 If you’ve ever wished for a fuzzy matching distance algorithm that runs at hash‑table speed, DPVS is for you!
@@ -21,12 +21,12 @@ If you’ve ever wished for a fuzzy matching distance algorithm that runs at has
 
 ## Features
 
-- **Deterministic vectorisation** – same word always gives the same vector.
-- **All‑in‑one fuzzy search** – handles substitutions, insertions, deletions, and swaps without any extra steps.
-- **FAISS‑backed** – choose between CPU or GPU indexing for massive throughput.
-- **Linear memory** – index size is `O(dictionary_size * vector_size)`, regardless of error tolerance.
-- **Simple API** – build, save, load, and query with a few lines of Python.
-- **Typo‑tolerant, not a typo‑corrector** – use it anywhere you need approximate string matching: record linkage, OCR post‑processing, fuzzy search, or duplicate detection.
+- **Deterministic vectorisation:** Same word always gives the same vector.
+- **All‑in‑one fuzzy search:** Handles substitutions, insertions, deletions, and swaps without any extra steps.
+- **FAISS‑backed:** Choose between CPU or GPU indexing for massive throughput.
+- **Linear memory:** Index size is `O(dictionary_size * vector_size)`, regardless of error tolerance.
+- **Simple API:** Build, save, load, and query with a few lines of Python.
+- **Typo‑tolerant, not a typo‑corrector:** Use it anywhere you need approximate string matching: record linkage, OCR post‑processing, fuzzy search, or duplicate detection.
 
 ---
 
@@ -47,13 +47,13 @@ After vectorizing the dictionary, we build a **FAISS HNSW index** using Manhatta
 
 ## Benchmark Highlights
 
-Here’s a quick comparison on a dictionary of ~128 000 English words, tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and swaps). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365
+Here’s a quick comparison on a dictionary of ~128 000 English words (with 3+ characters), tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and transposition). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365.
 
 ### Overall Accuracy and Speed
 
 | Method               | Top‑1 (%) | Top‑3 (%) | Top‑5 (%) | Duration (s) | Build (s) | Size (MB) |
 |----------------------|-----------|-----------|-----------|--------------|-----------|-----------|
-| DPVS (CPU)           | 83.29% 🥇 | 92.72% 🥇| 94.81% 🥇 | 0.348s 🥈   | 24.742 🥉 | 92.95 🥈 |
+| DPVS (CPU)           | 82.29% 🥇 | 92.72% 🥇| 94.81% 🥇 | 0.348s 🥈   | 24.742 🥉 | 92.95 🥈 |
 | SymSpell             | 79.08%    | 90.65%    | 92.88%    | 0.169s 🥇    | 1.987 🥇 | 190.30 🥉 |
 | Damerau‑Lev. BK‑Tree | 80.72% 🥈 | 92.11% 🥈| 94.71% 🥈 | 638.425s     | 5.385 🥈 | 38.37 🥇  |
 | Jaro‑Winkler         | 80.56% 🥉 | 92.08% 🥉| 94.68% 🥉 | 422.227s     | N/A       | N/A       |

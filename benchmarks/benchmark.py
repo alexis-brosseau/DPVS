@@ -6,7 +6,7 @@ from time import time
 from spellchecker import SpellChecker
 from tqdm import tqdm
 import jellyfish
-from rapidfuzz import fuzz
+from rapidfuzz import fuzz, process
 from pyxdameraulevenshtein import damerau_levenshtein_distance
 from symspellpy import SymSpell, Verbosity
 import pybktree
@@ -15,7 +15,6 @@ from unicodedata import normalize
 import heapq
 import json
 from pympler import asizeof
-import faiss
 
 # ---------------------------
 # TYPO GENERATORS
@@ -140,9 +139,8 @@ def candidates_jaro_winkler(query, vocab, k=5):
 
 
 def candidates_rapidfuzz(query, vocab, k=5):
-    def rf_dist(a, b):
-        return -fuzz.ratio(a, b)  # higher ratio = more similar, so negate
-    return candidates_linear_scan(query, vocab, rf_dist, k)
+    results = process.extract(query, vocab, scorer=fuzz.ratio, limit=k)
+    return [match[0] for match in results]
 
 
 def candidates_jaccard(query, vocab, k=5):
@@ -196,6 +194,7 @@ def candidates_norvig(query, vocab, freq_dict, k=5):
         
     cands = known([query]) or known(edits1(query)) or known(edits2(query)) or {query}
     return sorted(cands, key=lambda w: freq_dict.get(w, 0), reverse=True)[:k]
+
 
 # ---------------------------
 # EVALUATION

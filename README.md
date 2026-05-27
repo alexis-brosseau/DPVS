@@ -110,7 +110,7 @@ pip install faiss-cpu numpy
 
 ## Quick Start
 
-The repository includes an `example.py` file you can run immediately. Below is a compact walk‑through.
+The repository includes examples files that you can run immediately under `/examples`. Note that `pdvs.py` must be in the same directory. Below is a compact walk‑through.
 
 ```python
 import dpvs

@@ -1,6 +1,11 @@
 import pickle
+from enum import Enum
 import numpy as np
 import faiss        # Use `pip install faiss-cpu` or `pip install faiss-gpu` depending on your system
+
+class IndexType(Enum):
+    WORD = 1
+    SENTENCE = 2
 
 class VectorIndex:
     """
@@ -9,7 +14,7 @@ class VectorIndex:
     using Deterministic Positional Vectorization of Strings (DPVS).
     """
 
-    def __init__(self, chars: str="abcdefghijklmnopqrstuvwxyz0123456789- ", ef_construction: int=200, M: int=32, ef: int=50):
+    def __init__(self, index_type: IndexType=IndexType.WORD, chars: str="abcdefghijklmnopqrstuvwxyz0123456789- ", ef_construction: int=200, M: int=32, ef: int=50):
         """
         Initialize the DPVS model and its underlying FAISS index parameters.
 
@@ -19,6 +24,9 @@ class VectorIndex:
             M (int, optional): The number of bi-directional links created for every new element during HNSW index construction. Defaults to 32.
             ef (int, optional): The depth of the search for FAISS HNSW. Defaults to 50.
         """
+        self.type = index_type
+        self.vectorize = self._word_vector if index_type == IndexType.WORD else self._sentence_vector
+        
         self.chars = chars
         self.chars_len = len(chars)
         self.char_to_idx = {c: i for i, c in enumerate(chars)}
@@ -30,14 +38,14 @@ class VectorIndex:
         self.vectors = None
         self.index = None
             
-    def build(self, vocab: list[str]):
+    def build(self, entries: list[str]):
         """
-        Build the FAISS index from the provided vocabulary.
+        Build the FAISS index from the provided entries.
 
         Args:
-            vocab (list[str]): A list of strings to vectorize and index.
+            entries (list[str]): A list of strings to vectorize and index.
         """
-        self.vectors = self._build_vocab_vectors(vocab)
+        self.vectors = self._build_entries_vectors(entries)
         self.index = self._build_faiss_index(metric=faiss.METRIC_L1, ef_construction=self.ef_construction, M=self.M, ef=self.ef)
         
         return self
@@ -64,7 +72,7 @@ class VectorIndex:
         self.vectors = data
         self.index = self._build_faiss_index(metric=faiss.METRIC_L1, ef_construction=self.ef_construction, M=self.M, ef=self.ef)
 
-    def word_to_vector(self, word: str):
+    def _word_vector(self, word: str):
         """
         Convert a given word into an overlapping positional, count, and neighbor-based representation float vector.
 
@@ -80,7 +88,7 @@ class VectorIndex:
             word (str): The string to vectorize.
 
         Returns:
-            np.ndarray: A 104-dimensional numpy array of type float32 representing the word.
+            np.ndarray: A numpy array of type float32 representing the word.
         """
         word = word.lower()
         w_len = len(word)
@@ -121,6 +129,25 @@ class VectorIndex:
         vector = np.concatenate([vec_cnt, vec_pos, vec_pre, vec_suc])
         return vector
     
+    def _sentence_vector(self, sentence: str):
+        """
+        Convert a given sentence into a vector by averaging the vectors of its individual words.
+        
+        Args:
+            sentence (str): The input sentence to vectorize.
+            
+        Returns:
+            np.ndarray: A numpy array of type float32 representing the sentence.
+        """
+        
+        words = sentence.split()
+        vecs = [self._word_vector(w) for w in words if w]
+        
+        if not vecs: 
+            return np.zeros(self.chars_len * 4, dtype=np.float32)
+        
+        return np.mean(vecs, axis=0)
+    
     def lookup(self, queries: list[str], k: int=5):
         """
         Perform a similarity search on the index for a given set of queries.
@@ -140,7 +167,7 @@ class VectorIndex:
         if self.index is None:
             raise ValueError("The index has not been built yet. Please call the `build` method before performing lookups.")
         
-        query_vectors = np.array([self.word_to_vector(q) for q in queries], dtype=np.float32)
+        query_vectors = np.array([self.vectorize(q) for q in queries], dtype=np.float32)
         distances, labels = self.index.search(query_vectors, k)
         
         results = []
@@ -150,21 +177,21 @@ class VectorIndex:
         
         return results
 
-    def _build_vocab_vectors(self, vocab: list[str]):
+    def _build_entries_vectors(self, entries: list[str]):
         """
-        Vectorize all the valid items in the provided vocabulary using the `word_to_vector` method, and stack them into a matrix.
+        Vectorize all the valid items in the provided entries using, and stack them into a matrix.
         
         Args:
-            vocab (list[str]): A list of strings to vectorize.
+            entries (list[str]): A list of strings to vectorize.
                                                
         Returns:
             np.ndarray: Matrix containing the vertical stack of the generated vectors.
         """
         vectors = []
         
-        for w in vocab:
+        for w in entries:
             w = w.lower()
-            vectors.append(self.word_to_vector(w).astype(np.float32))
+            vectors.append(self.vectorize(w).astype(np.float32))
 
         return np.vstack(vectors)
     

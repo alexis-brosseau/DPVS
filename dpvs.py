@@ -93,6 +93,9 @@ class VectorIndex:
         word = word.lower()
         w_len = len(word)
         
+        if w_len == 0:
+            raise ValueError("The input word is empty and cannot be vectorized.")
+        
         vec_cnt = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on char count
         vec_pos  = np.zeros(self.chars_len, dtype=np.float32)    # 26D vector based on char position
 

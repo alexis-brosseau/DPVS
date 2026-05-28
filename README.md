@@ -47,7 +47,7 @@ After vectorizing the dictionary, we build a **FAISS HNSW index** using Manhatta
 
 ## Benchmark Highlights
 
-Here’s a quick comparison on a dictionary of ~160 000 English words (with 3+ characters), tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and transposition). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365.
+Here’s a quick comparison on a dictionary of ~160 000 English words (with 4+ characters), tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and transposition). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365.
 
 ### Overall Accuracy and Speed
 
@@ -66,21 +66,21 @@ Here’s a quick comparison on a dictionary of ~160 000 English words (with 3+ c
 | Method               | Substitution | Insertion | Deletion | Transposition |
 |----------------------|--------------|-----------|----------|---------------|
 | DPVS                 | 71.8%        | 94.2%     | 65.8% 🥉 | 99.0% 🥇     |
-| SymSpell             | 81.5%        | 95.5% 🥉  | 51.7%    | 84.6% 🥉     |
+| SymSpell             | 81.5% 🥉     | 95.5% 🥉  | 51.7%    | 84.6% 🥉     |
 | RapidFuzz            | 72.5%        | 97.9% 🥇  | 78.4% 🥇| 71.1%         |
 | Jaro‑Winkler         | 60.1%        | 95.2%     | 72.0% 🥈 | 89.1% 🥈     |
 | Damerau-Levenshtein  | 82.3% 🥇     | 94.1%     | 52.6%    | 84.4%         |
 | Levenshtein          | 82.3% 🥈     | 94.2%     | 53.0%    | 46.2%         |
-| Norvig               | 80.6% 🥉     | 95.7% 🥈  | 52.8%    | 84.0%         |
+| Norvig               | 80.6%        | 95.7% 🥈  | 52.8%    | 84.0%         |
 
 ### Top‑1 Accuracy by Error Count and Error Position
 
 | Method               | 1‑Error | 2‑Errors | Prefix  | Middle  | Suffix  |
 |----------------------|---------|----------|---------|---------|---------|
-| DPVS                 | 87.2% 🥇| 65.5% 🥉| 81.1% 🥇| 88.1% 🥇| 73.1% 🥇|
+| DPVS                 | 87.2% 🥇| 65.5% 🥈| 81.1% 🥇| 88.1% 🥇| 73.1% 🥇|
 | SymSpell             | 82.3%   | 62.4%    | 74.5% 🥉| 85.8%   | 65.8%   |
 | RapidFuzz            | 83.3% 🥈| 66.9% 🥇 | 73.4%   | 87.0% 🥈| 71.5% 🥉|
-| Jaro‑Winkler         | 82.8% 🥉| 65.4% 🥈 | 71.5%   | 86.5% 🥉| 71.6% 🥈|
+| Jaro‑Winkler         | 82.8% 🥉| 65.4% 🥉 | 71.5%   | 86.5% 🥉| 71.6% 🥈|
 | Damerau-Levenshtein  | 82.3%   | 62.3%    | 75.3% 🥈| 86.1%   | 64.3%   |
 | Levenshtein          | 72.3%   | 54.7%    | 62.7%   | 76.8%   | 58.0%   |
 | Norvig               | 82.3%   | 62.3%    | 74.4%   | 85.8%   | 65.7%   |

@@ -1,12 +1,12 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from difflib import SequenceMatcher
 from time import time
 from spellchecker import SpellChecker
 from tqdm import tqdm
 import jellyfish
 from rapidfuzz import fuzz, process
+from rapidfuzz.distance import Levenshtein, DamerauLevenshtein, JaroWinkler
 from pyxdameraulevenshtein import damerau_levenshtein_distance
 from symspellpy import SymSpell, Verbosity
 import pybktree
@@ -111,49 +111,21 @@ def generate_typos(vocab, n=5000, difficulty="mixed"):
 # BASELINE METHODS
 # ---------------------------
 
-def candidates_linear_scan(query, vocab, distance_func, k=5):
-    """Generic linear scan using a heap to keep top-k."""
-    heap = []
-    for w in vocab:
-        dist = distance_func(query, w)
-        # Push negative distance for max-heap behaviour (we want smallest distances)
-        heapq.heappush(heap, (-dist, w))
-        if len(heap) > k:
-            heapq.heappop(heap)
-    # Extract words sorted by distance (closest first)
-    return [w for _, w in sorted(heap, key=lambda x: -x[0])]
-
 def candidates_levenshtein(query, vocab, k=5):
-    return candidates_linear_scan(query, vocab, jellyfish.levenshtein_distance, k)
-
+    results = process.extract(query, vocab, scorer=Levenshtein.distance, limit=k)
+    return [match[0] for match in results]
 
 def candidates_damerau_levenshtein(query, vocab, k=5):
-    return candidates_linear_scan(query, vocab, damerau_levenshtein_distance, k)
-
+    results = process.extract(query, vocab, scorer=DamerauLevenshtein.distance, limit=k)
+    return [match[0] for match in results]
 
 def candidates_jaro_winkler(query, vocab, k=5):
-    # Jaro-Winkler similarity: higher is better, so negate for heap
-    def jw_dist(a, b):
-        return -jellyfish.jaro_winkler_similarity(a, b)
-    return candidates_linear_scan(query, vocab, jw_dist, k)
-
+    results = process.extract(query, vocab, scorer=JaroWinkler.similarity, limit=k)
+    return [match[0] for match in results]
 
 def candidates_rapidfuzz(query, vocab, k=5):
     results = process.extract(query, vocab, scorer=fuzz.ratio, limit=k)
     return [match[0] for match in results]
-
-
-def candidates_jaccard(query, vocab, k=5):
-    def jaccard_dist(a, b):
-        set_a = set(a[i:i+2] for i in range(len(a)-1)) if len(a) > 1 else {a}
-        set_b = set(b[i:i+2] for i in range(len(b)-1)) if len(b) > 1 else {b}
-        intersect = set_a.intersection(set_b)
-        union = set_a.union(set_b)
-        if not union:
-            return 1.0
-        return -len(intersect) / len(union)  # negate similarity for heap
-    return candidates_linear_scan(query, vocab, jaccard_dist, k)
-
 
 def candidates_symspell(query, vocab, symspell_instance, k=5):
     """SymSpell: use its built-in lookup, return top-k candidates."""
@@ -161,14 +133,12 @@ def candidates_symspell(query, vocab, symspell_instance, k=5):
     # suggestions are already sorted by (distance, frequency)
     return [s.term for s in suggestions[:k]]
 
-
 def candidates_bktree(query, vocab, bktree_instance, k=5):
     """BK-Tree: find words within edit distance 2, sort by distance."""
     results = bktree_instance.find(query, 2)
     # results is a list of (distance, word); sort by distance
     results.sort(key=lambda x: x[0])
     return [word for dist, word in results[:k]]
-
 
 def candidates_dpvs_batch(queries, vocab, dpvs_instance, k=5):
     """DPVS batched lookup. Returns list of candidate lists."""
@@ -218,6 +188,7 @@ def evaluate_accuracy(method_func, name, test_cases, vocab, args=[], trial_info=
     desc_str = f"{trial_info} - {name}" if trial_info else name
 
     if is_batched:
+        print(f"Running {name} in batch mode...", end="\r", flush=True)
         queries = [tc["query"] for tc in test_cases]
         all_preds = method_func(queries, vocab, *args)
 
@@ -297,24 +268,24 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
     dpvs_build_time = t1_dpvs - t0_dpvs
     dpvs_size = asizeof.asizeof(dpvs_instance) / (1024 * 1024)
 
-    print("\nBuilding BK-Tree index (preprocessing)...")
-    t0_bktree = time()
-    bktree_instance = pybktree.BKTree(damerau_levenshtein_distance, vocab)
-    t1_bktree = time()
-    bktree_build_time = t1_bktree - t0_bktree
-    bktree_size = asizeof.asizeof(bktree_instance) / (1024 * 1024)
+    #TODO: Implement a c++ implementation of BK-Tree for better performance, this is a pure Python version which is not optimized and may be slow for large vocabularies.
+    # print("\nBuilding BK-Tree index (preprocessing)...")
+    # t0_bktree = time()
+    # bktree_instance = pybktree.BKTree(damerau_levenshtein_distance, vocab)
+    # t1_bktree = time()
+    # bktree_build_time = t1_bktree - t0_bktree
+    # bktree_size = asizeof.asizeof(bktree_instance) / (1024 * 1024)
 
     # Define methods to benchmark
     methods = [
         (candidates_dpvs_batch, "DPVS", [dpvs_instance], True),
-        (candidates_symspell, "SymSpell", [symspell_instance], False),
-        (candidates_norvig, "Norvig", [freq_dict], False),
-        (candidates_bktree, "Damerau BK-Tree", [bktree_instance], False),
-        #(candidates_damerau_levenshtein, "Damerau-Levenshtein", [], False),    # Too slow for large vocabularies, replaced with BK-Tree which uses the same distance but is indexed
-        (candidates_levenshtein, "Levenshtein", [], False),
-        (candidates_jaro_winkler, "Jaro-Winkler", [], False),
+        #(candidates_symspell, "SymSpell", [symspell_instance], False),
+        #(candidates_bktree, "Damerau BK-Tree", [bktree_instance], False),  # BK-Tree is currently commented out due to performance concerns with large vocabularies in pure Python
+        #(candidates_damerau_levenshtein, "Damerau-Levenshtein", [], False),
+        #(candidates_jaro_winkler, "Jaro-Winkler", [], False),
         (candidates_rapidfuzz, "RapidFuzz", [], False),
-        #(candidates_jaccard, "Bigram Jaccard", [], False),                     # Too slow for large vocabularies and generally performs poorly
+        #(candidates_norvig, "Norvig", [freq_dict], False),
+        #(candidates_levenshtein, "Levenshtein", [], False),
     ]
 
     results = {name: {"top1": [], "top3": [], "top5": [], "time_sec": [], "iters_sec": [], "build_time": [], "build_size": [], "stats": []} for _, name, _, _ in methods}

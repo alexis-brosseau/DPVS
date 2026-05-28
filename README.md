@@ -66,12 +66,12 @@ Here’s a quick comparison on a dictionary of ~160 000 English words (with 3+ c
 | Method               | Substitution | Insertion | Deletion | Transposition |
 |----------------------|--------------|-----------|----------|---------------|
 | DPVS                 | 71.8%        | 94.2%     | 65.8% 🥉 | 99.0% 🥇     |
-| SymSpell             | 81.5%        | 95.5% 🥉  | 51.7%    | 84.6% 🥉     |
+| SymSpell             | 81.5% 🥉     | 95.5% 🥉  | 51.7%    | 84.6% 🥉     |
 | RapidFuzz            | 72.5%        | 97.9% 🥇  | 78.4% 🥇| 71.1%         |
 | Jaro‑Winkler         | 60.1%        | 95.2%     | 72.0% 🥈 | 89.1% 🥈     |
 | Damerau-Levenshtein  | 82.3% 🥇     | 94.1%     | 52.6%    | 84.4%         |
 | Levenshtein          | 82.3% 🥈     | 94.2%     | 53.0%    | 46.2%         |
-| Norvig               | 80.6% 🥉     | 95.7% 🥈  | 52.8%    | 84.0%         |
+| Norvig               | 80.6%        | 95.7% 🥈  | 52.8%    | 84.0%         |
 
 ### Top‑1 Accuracy by Error Count and Error Position
 

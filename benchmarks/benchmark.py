@@ -143,7 +143,7 @@ def candidates_bktree(query, vocab, bktree_instance, k=5):
 def candidates_dpvs_batch(queries, vocab, dpvs_instance, k=5):
     """DPVS batched lookup. Returns list of candidate lists."""
     results = dpvs_instance.lookup(queries, k)
-    return [[vocab[idx] for idx, dist in res[1]] for res in results]
+    return [[word for word, dist in res[1]] for res in results]
 
 def candidates_norvig(query, vocab, freq_dict, k=5):
     """Norvig's spelling corrector candidate generation."""
@@ -311,9 +311,9 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
             elif name.startswith("DPVS"):
                 results[name]["build_time"].append(dpvs_build_time)
                 results[name]["build_size"].append(dpvs_size)
-            elif name.startswith("Damerau BK-Tree"):
-                results[name]["build_time"].append(bktree_build_time)
-                results[name]["build_size"].append(bktree_size)
+            # elif name.startswith("Damerau BK-Tree"):
+            #     results[name]["build_time"].append(bktree_build_time)
+            #     results[name]["build_size"].append(bktree_size)
             else:
                 results[name]["build_time"].append(0.0)
                 results[name]["build_size"].append(0.0)

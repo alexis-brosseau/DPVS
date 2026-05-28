@@ -45,6 +45,7 @@ class VectorIndex:
         Args:
             entries (list[str]): A list of strings to vectorize and index.
         """
+        self.entries = entries
         self.vectors = self._build_entries_vectors(entries)
         self.index = self._build_faiss_index(metric=faiss.METRIC_L1, ef_construction=self.ef_construction, M=self.M, ef=self.ef)
         
@@ -58,7 +59,8 @@ class VectorIndex:
             filepath (str, optional): The path to the file where the index should be saved. Defaults to "dpvs_index.pkl".
         """
         with open(filepath, 'wb') as f:
-            pickle.dump(self.vectors, f)
+            #save vectors and entries together to ensure they can be reconstructed properly
+            pickle.dump({'entries': self.entries, 'vectors': self.vectors}, f)
 
     def load(self, filepath: str="dpvs_index.pkl"):
         """
@@ -69,7 +71,8 @@ class VectorIndex:
         """
         with open(filepath, 'rb') as f:
             data = pickle.load(f)
-        self.vectors = data
+        self.entries = data['entries']
+        self.vectors = data['vectors']
         self.index = self._build_faiss_index(metric=faiss.METRIC_L1, ef_construction=self.ef_construction, M=self.M, ef=self.ef)
 
     def _word_vector(self, word: str):
@@ -175,7 +178,7 @@ class VectorIndex:
         
         results = []
         for query, idx, dists in zip(queries, labels, distances):
-            result = [(idx, dist) for idx, dist in zip(idx, dists) if idx != -1]
+            result = [(self.entries[idx], dist) for idx, dist in zip(idx, dists) if idx != -1]
             results.append((query, result))
         
         return results

@@ -12,7 +12,7 @@ I built DPVS because I needed to search through a large vocabulary with queries 
 DPVS solves these problems:
 
 - **Speed:** FAISS‑powered HNSW index gives you ~14 000 queries per second **on a laptop CPU** (and even faster with a GPU!).
-- **Transpositions Accuracy:** It correctly catches 98.6 % of transpositions errors, beating all other algorithms by a wide margin.
+- **Transpositions Accuracy:** It correctly catches 98.8 % of transpositions errors, beating all other algorithms by a wide margin.
 - **Memory:** The index size grows **linearly** with dictionary size. No exponential blow‑up from edit distance.
 
 If you’ve ever wished for a fuzzy matching distance algorithm that runs at hash‑table speed, DPVS is for you!

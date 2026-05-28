@@ -279,13 +279,13 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
     # Define methods to benchmark
     methods = [
         (candidates_dpvs_batch, "DPVS", [dpvs_instance], True),
-        #(candidates_symspell, "SymSpell", [symspell_instance], False),
-        #(candidates_bktree, "Damerau BK-Tree", [bktree_instance], False),  # BK-Tree is currently commented out due to performance concerns with large vocabularies in pure Python
-        #(candidates_damerau_levenshtein, "Damerau-Levenshtein", [], False),
-        #(candidates_jaro_winkler, "Jaro-Winkler", [], False),
+        (candidates_symspell, "SymSpell", [symspell_instance], False),
         (candidates_rapidfuzz, "RapidFuzz", [], False),
-        #(candidates_norvig, "Norvig", [freq_dict], False),
-        #(candidates_levenshtein, "Levenshtein", [], False),
+        (candidates_jaro_winkler, "Jaro-Winkler", [], False),
+        #(candidates_bktree, "Damerau BK-Tree", [bktree_instance], False),  # BK-Tree is currently commented out due to performance concerns with large vocabularies in pure Python
+        (candidates_damerau_levenshtein, "Damerau-Levenshtein", [], False),
+        (candidates_levenshtein, "Levenshtein", [], False),
+        (candidates_norvig, "Norvig", [freq_dict], False),
     ]
 
     results = {name: {"top1": [], "top3": [], "top5": [], "time_sec": [], "iters_sec": [], "build_time": [], "build_size": [], "stats": []} for _, name, _, _ in methods}

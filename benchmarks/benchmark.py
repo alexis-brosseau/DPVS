@@ -65,7 +65,7 @@ def typo_insertion(word):
     return word[:i] + c + word[i:], get_pos_label(i, len(word))
 
 
-def generate_typos(vocab, n=5000, difficulty="mixed"):
+def generate_typos(vocab, n=5000, get_num_edits=lambda: 1):
     # realistic weights: Sub is most common, then Ins/Del, then Swap
     # You can adjust these weights
     types = [
@@ -80,16 +80,9 @@ def generate_typos(vocab, n=5000, difficulty="mixed"):
 
     for _ in range(n):
         w = random.choice(vocab)
-        while len(w) < 4:
-            w = random.choice(vocab)
-
         t_name, t_func = random.choices(types, weights=weights, k=1)[0]
         
-        num_edits = 1
-        if difficulty == "2-edit":
-            num_edits = 2
-        elif difficulty == "mixed":
-            num_edits = random.choices([1, 2], weights=[0.8, 0.2], k=1)[0]
+        num_edits = get_num_edits()
         
         current_w = w
         pos_label = "middle"
@@ -296,7 +289,8 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
         random.seed(seed + tr)
         np.random.seed(seed + tr)
 
-        test_cases = generate_typos(vocab, n_per_trial, difficulty="mixed")
+        get_num_edits = lambda: random.choices([1, 2], weights=[0.8, 0.2], k=1)[0]
+        test_cases = generate_typos(vocab, n_per_trial, get_num_edits)
         trial_str = f"Trial {tr + 1}/{n_trials}"
 
         for func, name, args, is_batched in methods:
@@ -387,7 +381,7 @@ if __name__ == "__main__":
     filtered_dict = {
         normalize('NFD', w): freq 
         for w, freq in freq_dict.items()
-        if len(w) > 2
+        if len(w) > 3
     }
     
     print(f"Using {len(filtered_dict)}/{len(freq_dict)} alphabetic words for the benchmark")

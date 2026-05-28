@@ -12,7 +12,7 @@ I built DPVS because I needed to search through a large vocabulary with queries 
 DPVS solves these problems:
 
 - **Speed:** FAISS‑powered HNSW index gives you ~14 000 queries per second **on a laptop CPU** (and even faster with a GPU!).
-- **Transpositions Accuracy:** It correctly catches 98.8 % of transpositions errors, beating all other algorithms by a wide margin.
+- **Transpositions Accuracy:** It correctly catches 99 % of transpositions errors, beating all other algorithms by a wide margin.
 - **Memory:** The index size grows **linearly** with dictionary size. No exponential blow‑up from edit distance.
 
 If you’ve ever wished for a fuzzy matching distance algorithm that runs at hash‑table speed, DPVS is for you!
@@ -47,13 +47,13 @@ After vectorizing the dictionary, we build a **FAISS HNSW index** using Manhatta
 
 ## Benchmark Highlights
 
-Here’s a quick comparison on a dictionary of ~128 000 English words (with 3+ characters), tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and transposition). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365.
+Here’s a quick comparison on a dictionary of ~160 000 English words (with 3+ characters), tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and transposition). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365.
 
 ### Overall Accuracy and Speed
 
 | Method               | Top‑1 (%) | Top‑3 (%) | Top‑5 (%) | Duration (s) | Build (s) | Size (MB) |
 |----------------------|-----------|-----------|-----------|--------------|-----------|-----------|
-| DPVS (CPU)           | 81.58% 🥇 | 92.33% 🥇| 94.66% 🥇 | 0.390s 🥈   | 24.313    | 102.36    |
+| DPVS (CPU)           | 82.79% 🥇 | 92.80% 🥇| 94.94% 🥇 | 0.438s 🥈   | 27.126    | 104.81    |
 | SymSpell             | 78.24%    | 90.11%    | 92.16%    | 0.164s 🥇    | 1.987     | 190.31    |
 | RapidFuzz            | 79.96% 🥈 | 91.70%    | 94.42% 🥉| 81.064s     | N/A       | N/A       |
 | Jaro‑Winkler         | 79.24% 🥉 | 92.02% 🥈| 94.56% 🥈 | 79.911s      | N/A       | N/A       |
@@ -65,7 +65,7 @@ Here’s a quick comparison on a dictionary of ~128 000 English words (with 3+ c
 
 | Method               | Substitution | Insertion | Deletion | Transposition |
 |----------------------|--------------|-----------|----------|---------------|
-| DPVS                 | 71.6%        | 92.2%     | 63.5% 🥉 | 98.8% 🥇     |
+| DPVS                 | 71.8%        | 94.2%     | 65.8% 🥉 | 99.0% 🥇     |
 | SymSpell             | 81.5%        | 95.5% 🥉  | 51.7%    | 84.6% 🥉     |
 | RapidFuzz            | 72.5%        | 97.9% 🥇  | 78.4% 🥇| 71.1%         |
 | Jaro‑Winkler         | 60.1%        | 95.2%     | 72.0% 🥈 | 89.1% 🥈     |
@@ -77,10 +77,10 @@ Here’s a quick comparison on a dictionary of ~128 000 English words (with 3+ c
 
 | Method               | 1‑Error | 2‑Errors | Prefix  | Middle  | Suffix  |
 |----------------------|---------|----------|---------|---------|---------|
-| DPVS                 | 86.1% 🥇| 64.0% 🥉| 80.8% 🥇| 87.2% 🥇| 70.2% 🥈|
+| DPVS                 | 87.2% 🥇| 65.5% 🥉| 81.1% 🥇| 88.1% 🥇| 73.1% 🥇|
 | SymSpell             | 82.3%   | 62.4%    | 74.5% 🥉| 85.8%   | 65.8%   |
 | RapidFuzz            | 83.3% 🥈| 66.9% 🥇 | 73.4%   | 87.0% 🥈| 71.5% 🥉|
-| Jaro‑Winkler         | 82.8% 🥉| 65.4% 🥈 | 71.5%   | 86.5% 🥉| 71.6% 🥇|
+| Jaro‑Winkler         | 82.8% 🥉| 65.4% 🥈 | 71.5%   | 86.5% 🥉| 71.6% 🥈|
 | Damerau-Levenshtein  | 82.3%   | 62.3%    | 75.3% 🥈| 86.1%   | 64.3%   |
 | Levenshtein          | 72.3%   | 54.7%    | 62.7%   | 76.8%   | 58.0%   |
 | Norvig               | 82.3%   | 62.3%    | 74.4%   | 85.8%   | 65.7%   |

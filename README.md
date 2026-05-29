@@ -61,7 +61,7 @@ Here’s a quick comparison on a dictionary of ~160 000 English words (with 4+ c
 | Levenshtein          | 68.70%    | 84.27%    | 88.22%    | 75.773s     | N/A       | N/A       |
 | Norvig               | 79.36%    | 90.59%    | 91.28%    | 58.657s 🥉   | N/A       | N/A       |
 
-### Top‑1 Accuracy by Typo Type
+### Top‑1 Accuracy by Error Type
 
 | Method               | Substitution | Insertion | Deletion | Transposition |
 |----------------------|--------------|-----------|----------|---------------|

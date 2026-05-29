@@ -75,11 +75,40 @@ class VectorIndex:
         self.vectors = data['vectors']
         self.index = self._build_faiss_index(metric=faiss.METRIC_L1, ef_construction=self.ef_construction, M=self.M, ef=self.ef)
 
+    def lookup(self, queries: list[str], k: int=5):
+        """
+        Perform a similarity search on the index for a given set of queries.
+
+        Args:
+            queries (list[str]): A list of string queries to look up in the index.
+            k (int, optional): The number of nearest neighbors to retrieve for each query. Defaults to 10.
+
+        Returns:
+            list[tuple[str, list[tuple[str, float]]]]: A list of tuples, where each tuple contains:
+                - The original query string
+                - A list of `k` nearest neighbors as tuples of (matched_string, distance)
+        
+        Raises:
+            ValueError: If the index has not been built yet.
+        """
+        if self.index is None:
+            raise ValueError("The index has not been built yet. Please call the `build` method before performing lookups.")
+        
+        query_vectors = np.array([self.vectorize(q) for q in queries], dtype=np.float32)
+        distances, labels = self.index.search(query_vectors, k)
+        
+        results = []
+        for query, idx, dists in zip(queries, labels, distances):
+            result = [(self.entries[idx], dist) for idx, dist in zip(idx, dists) if idx != -1]
+            results.append((query, result))
+        
+        return results
+
     def _word_vector(self, word: str):
         """
         Convert a given word into an overlapping positional, count, and neighbor-based representation float vector.
 
-        It generates a concatenated vector with 4 distinct sub-vectors of size 26 (one for each character 'a'-'z'):
+        It generates a concatenated vector with 4 distinct sub-vectors:
         1. Character frequencies
         2. Average character position
         3. Preceding characters proximity-weights
@@ -99,8 +128,8 @@ class VectorIndex:
         if w_len == 0:
             raise ValueError("The input word is empty and cannot be vectorized.")
         
-        vec_cnt = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on char count
-        vec_pos  = np.zeros(self.chars_len, dtype=np.float32)    # 26D vector based on char position
+        vec_cnt = np.zeros(self.chars_len, dtype=np.float32)     # Vector based on char count
+        vec_pos  = np.zeros(self.chars_len, dtype=np.float32)    # Vector based on char position
 
         for i, ch in enumerate(word, start=1):
             if ch in self.char_idx:
@@ -108,13 +137,12 @@ class VectorIndex:
                 vec_cnt[idx] += 1 / w_len
                 vec_pos[idx]  += i / w_len
                 
-
         # Context-based vectors
         DECAY = 0.75    # Reduces the influence of farther characters
         BOOST = 3.5     # Amplifies the influence of neighboring characters
         
-        vec_pre = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on preceding chars
-        vec_suc = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on succeeding chars
+        vec_pre = np.zeros(self.chars_len, dtype=np.float32)     # Vector based on preceding chars
+        vec_suc = np.zeros(self.chars_len, dtype=np.float32)     # Vector based on succeeding chars
         
         for i, ch in enumerate(word, start=1):
             if ch in self.char_idx:
@@ -155,35 +183,6 @@ class VectorIndex:
             raise ValueError("The input sentence does not contain any valid words for vectorization.")
         
         return np.mean(vecs, axis=0)
-    
-    def lookup(self, queries: list[str], k: int=5):
-        """
-        Perform a similarity search on the index for a given set of queries.
-
-        Args:
-            queries (list[str]): A list of string queries to look up in the index.
-            k (int, optional): The number of nearest neighbors to retrieve for each query. Defaults to 10.
-
-        Returns:
-            list[tuple[str, list[tuple[str, float]]]]: A list of tuples, where each tuple contains:
-                - The original query string
-                - A list of `k` nearest neighbors as tuples of (matched_string, distance)
-        
-        Raises:
-            ValueError: If the index has not been built yet.
-        """
-        if self.index is None:
-            raise ValueError("The index has not been built yet. Please call the `build` method before performing lookups.")
-        
-        query_vectors = np.array([self.vectorize(q) for q in queries], dtype=np.float32)
-        distances, labels = self.index.search(query_vectors, k)
-        
-        results = []
-        for query, idx, dists in zip(queries, labels, distances):
-            result = [(self.entries[idx], dist) for idx, dist in zip(idx, dists) if idx != -1]
-            results.append((query, result))
-        
-        return results
 
     def _build_entries_vectors(self, entries: list[str]):
         """

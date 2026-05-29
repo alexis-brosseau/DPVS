@@ -12,7 +12,6 @@ from symspellpy import SymSpell, Verbosity
 import pybktree
 import dpvs
 from unicodedata import normalize
-import heapq
 import json
 from pympler import asizeof
 

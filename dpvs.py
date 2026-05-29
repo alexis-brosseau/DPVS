@@ -29,7 +29,7 @@ class VectorIndex:
         
         self.chars = chars
         self.chars_len = len(chars)
-        self.char_to_idx = {c: i for i, c in enumerate(chars)}
+        self.char_idx = {c: i for i, c in enumerate(chars)}
         
         self.ef_construction = ef_construction
         self.M = M
@@ -103,34 +103,36 @@ class VectorIndex:
         vec_pos  = np.zeros(self.chars_len, dtype=np.float32)    # 26D vector based on char position
 
         for i, ch in enumerate(word, start=1):
-            if ch in self.char_to_idx:
-                idx = self.char_to_idx[ch]
+            if ch in self.char_idx:
+                idx = self.char_idx[ch]
                 vec_cnt[idx] += 1 / w_len
                 vec_pos[idx]  += i / w_len
-        
+                
 
-        # Context-based vectors (preceding and succeeding characters)
+        # Context-based vectors
         DECAY = 0.75    # Reduces the influence of farther characters
         BOOST = 3.5     # Amplifies the influence of neighboring characters
         
-        vec_pre = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on preceding chars (weighted by position and distance)
-        vec_suc = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on succeeding chars (weighted by position and distance)
+        vec_pre = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on preceding chars
+        vec_suc = np.zeros(self.chars_len, dtype=np.float32)     # 26D vector based on succeeding chars
         
         for i, ch in enumerate(word, start=1):
-            if ch in self.char_to_idx:
-                idx = self.char_to_idx[ch]
+            if ch in self.char_idx:
+                idx = self.char_idx[ch]
                         
                 for j in range(i - 1):
                     pre = word[j]
-                    if pre in self.char_to_idx:
-                        pre_idx = self.char_to_idx[pre]
-                        vec_pre[idx] += (vec_pos[pre_idx] + BOOST) * (DECAY ** (i - j)) / w_len
+                    if pre in self.char_idx:
+                        pre_idx = self.char_idx[pre]
+                        weight = (vec_pos[pre_idx] + BOOST) * (DECAY ** (i - j))
+                        vec_pre[idx] += weight / w_len
 
                 for j in range(i + 1, len(word)):
                     suc = word[j]
-                    if suc in self.char_to_idx:
-                        suc_idx = self.char_to_idx[suc]
-                        vec_suc[idx] += (vec_pos[suc_idx] + BOOST) * (DECAY ** (j - i)) / w_len
+                    if suc in self.char_idx:
+                        suc_idx = self.char_idx[suc]
+                        weight = (vec_pos[suc_idx] + BOOST) * (DECAY ** (j - i))
+                        vec_suc[idx] += weight / w_len
         
         vector = np.concatenate([vec_cnt, vec_pos, vec_pre, vec_suc])
         return vector

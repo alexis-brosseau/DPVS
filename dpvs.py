@@ -14,7 +14,7 @@ class VectorIndex:
     using Deterministic Positional Vectorization of Strings (DPVS).
     """
 
-    def __init__(self, index_type: IndexType=IndexType.WORD, chars: str="abcdefghijklmnopqrstuvwxyz0123456789-' ", ef_construction: int=200, M: int=32, ef: int=50):
+    def __init__(self, index_type: IndexType=IndexType.WORD, chars: str="abcdefghijklmnopqrstuvwxyz0123456789-̧ ' ", ef_construction: int=200, M: int=32, ef: int=50):
         """
         Initialize the DPVS model and its underlying FAISS index parameters.
 

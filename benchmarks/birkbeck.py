@@ -141,7 +141,7 @@ def evaluate_simple(method_func, name, test_cases, vocab, args=[], is_batched=Fa
         "iters_sec": total / duration if duration > 0 else 0.0
     }
 
-def run_birkbeck_benchmark():
+def run_birkbeck_benchmark(save_to_file=False):
     data_path = os.path.join(os.path.dirname(__file__), "birkbeck.txt")
     print(f"Loading dataset from {data_path}...")
     test_cases, birkbeck_targets = load_birkbeck_dataset(data_path)
@@ -212,23 +212,50 @@ def run_birkbeck_benchmark():
             
         results.append(res)
         
-    print("\n" + "=" * 175)
-    print(f"{'Method':<20} | {'Top-1 (%)':<15} | {'Top-5 (%)':<15} | {'Top-10 (%)':<15} | {'Top-25 (%)':<15} | {'Top-100 (%)':<15} | {'Duration (s)':<15} | {'Iter/s':<10} | {'Build (s)':<10} | {'Size (MB)':<10}")
-    print("-" * 175)
+    metrics_to_rank = [
+        ('top1', True), ('top5', True), ('top10', True), ('top25', True), ('top100', True), 
+        ('time_sec', False), ('iters_sec', True)
+    ]
+    medals = {r['name']: {} for r in results}
+    for key, higher_is_better in metrics_to_rank:
+        sorted_res = sorted(results, key=lambda x: x[key], reverse=higher_is_better)
+        for i, rank_medal in enumerate(['🥇', '🥈', '🥉']):
+            if i < len(sorted_res):
+                medals[sorted_res[i]['name']][key] = " " + rank_medal
+
+    print("\n| Method | Top-1 (%) | Top-5 (%) | Top-10 (%) | Top-25 (%) | Top-100 (%) | Duration (s) | Iter/s | Build (s) | Size (MB) |")
+    print("|---|---|---|---|---|---|---|---|---|---|")
 
     for r in results:
-        t1 = r['top1'] * 100
-        t5 = r['top5'] * 100
-        t10 = r['top10'] * 100
-        t25 = r['top25'] * 100
-        t100 = r['top100'] * 100
-        d = r['time_sec']
-        it = r['iters_sec']
-        bt = r['build_time']
-        bs = r['build_size']
+        t1 = f"{r['top1'] * 100:.2f}%{medals[r['name']].get('top1', '')}"
+        t5 = f"{r['top5'] * 100:.2f}%{medals[r['name']].get('top5', '')}"
+        t10 = f"{r['top10'] * 100:.2f}%{medals[r['name']].get('top10', '')}"
+        t25 = f"{r['top25'] * 100:.2f}%{medals[r['name']].get('top25', '')}"
+        t100 = f"{r['top100'] * 100:.2f}%{medals[r['name']].get('top100', '')}"
+        d = f"{r['time_sec']:.3f}s{medals[r['name']].get('time_sec', '')}"
+        it = f"{r['iters_sec']:.1f}{medals[r['name']].get('iters_sec', '')}"
+        bt = f"{r['build_time']:.3f}s" if r['build_time'] > 0 else "N/A"
+        bs = f"{r['build_size']:.2f}" if r['build_size'] > 0 else "N/A"
         
-        print(f"{r['name']:<20} | {t1:>5.2f}%          | {t5:>5.2f}%          | {t10:>5.2f}%          | {t25:>5.2f}%          | {t100:>5.2f}%          | {d:>7.3f}s        | {it:>8.1f} | {bt:>8.3f}s    | {bs:>8.2f}")
-    print("=" * 175)
+        print(f"| {r['name']:<20} | {t1:<10} | {t5:<10} | {t10:<10} | {t25:<10} | {t100:<11} | {d:<13} | {it:<10} | {bt:<10} | {bs:<10} |")
+
+    with open("birkbeck_results.md", "w", encoding="utf-8") as f:
+        f.write("# Birkbeck Benchmark Results\n\n")
+        f.write("| Method | Top-1 (%) | Top-5 (%) | Top-10 (%) | Top-25 (%) | Top-100 (%) | Duration (s) | Iter/s | Build (s) | Size (MB) |\n")
+        f.write("|---|---|---|---|---|---|---|---|---|---|\n")
+        for r in results:
+            t1 = f"{r['top1'] * 100:.2f}%{medals[r['name']].get('top1', '')}"
+            t5 = f"{r['top5'] * 100:.2f}%{medals[r['name']].get('top5', '')}"
+            t10 = f"{r['top10'] * 100:.2f}%{medals[r['name']].get('top10', '')}"
+            t25 = f"{r['top25'] * 100:.2f}%{medals[r['name']].get('top25', '')}"
+            t100 = f"{r['top100'] * 100:.2f}%{medals[r['name']].get('top100', '')}"
+            d = f"{r['time_sec']:.3f}s{medals[r['name']].get('time_sec', '')}"
+            it = f"{r['iters_sec']:.1f}{medals[r['name']].get('iters_sec', '')}"
+            bt = f"{r['build_time']:.3f}s" if r['build_time'] > 0 else "N/A"
+            bs = f"{r['build_size']:.2f}" if r['build_size'] > 0 else "N/A"
+            f.write(f"| {r['name']} | {t1} | {t5} | {t10} | {t25} | {t100} | {d} | {it} | {bt} | {bs} |\n")
+            
+    print("\nSaved benchmark data to birkbeck_results.md")
 
 if __name__ == "__main__":
-    run_birkbeck_benchmark()
+    run_birkbeck_benchmark(save_to_file=True)

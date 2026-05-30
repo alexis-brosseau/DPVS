@@ -50,50 +50,54 @@ After vectorizing the dictionary, we build a **FAISS HNSW index** using Manhatta
 ### Real-World Human Error Benchmark (Birkbeck Spelling Error Corpus)
 Here’s a comparison on a dictionary of ~160 000 English words, tested with the Birkbeck Spelling Error Corpus. This dataset consists of non-synthetic human misspellings including heavy phonetic mutations, dysgraphia and multi-error handwriting slips. Tested on a Ryzen 9 365.
 
-| Method              | Top‑1 (%) | Top‑5 (%) | Top‑10 (%) | Top‑25 (%) | Top‑100 (%) | Duration (s) | Build (s) | Size (MB) |
-| ------------------- | --------- | --------- | ---------- | ---------- | ----------- | ------------ | --------- | --------- |
-| DPVS (CPU)          | 30.25%    | 48.29%    | 54.94%     | 63.05%     | 72.49%      | 4.293s       | 29.409s   | 110.06    |
-| SymSpell            | 34.05%    | 48.92%    | 51.94%     | 41.66%     | 57.70%      | 4.239s       | 5.030s    | 3568.23   |
-| Damerau-Levenshtein | 29.20%    | 48.10%    | 55.56%     | 63.92%     | 73.18%      | 5182.434s    | N/A       | N/A       |
+| Method | Top-1 (%) | Top-5 (%) | Top-10 (%) | Top-25 (%) | Top-100 (%) | Duration (s) | Build (s) | Size (MB) |
+|--------|-----------|-----------|------------|------------|-------------|--------------|-----------|-----------|
+| DPVS                 | 29.24%     | 46.70%     | 53.25%     | 61.75%     | 71.26%      | 2.741s 🥇      | 22.074s    | 110.06     |
+| SymSpell             | 34.06% 🥇   | 48.92% 🥉   | 51.94%     | 54.58%     | 57.70%      | 12.596s 🥈     | 37.902s    | 3568.23    |
+| RapidFuzz            | 32.65% 🥉   | 51.74% 🥇   | 58.54% 🥇   | 66.56% 🥇   | 76.67% 🥇    | 412.887s 🥉    | N/A        | N/A        |
+| Jaro-Winkler         | 30.27%     | 50.72% 🥈   | 57.66% 🥈   | 65.43% 🥈   | 75.86% 🥈    | 518.326s      | N/A        | N/A        |
+| Damerau-Levenshtein  | 29.20%     | 48.10%     | 55.56% 🥉   | 63.92% 🥉   | 73.18% 🥉    | 3431.185s     | N/A        | N/A        |
+| Levenshtein          | 28.10%     | 46.73%     | 54.20%     | 62.64%     | 72.35%      | 463.465s      | N/A        | N/A        |
+| Norvig               | 33.77% 🥈   | 40.80%     | 41.33%     | 41.48%     | 41.48%      | 746.374s      | N/A        | N/A        |
 
 ### Synthetic Dataset
 Here’s a quick comparison on the same dictionary of ~160 000 English words (with 4+ characters), tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and transposition). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365.
 
 #### Overall Accuracy and Speed
 
-| Method               | Top‑1 (%) | Top‑3 (%) | Top‑5 (%) | Duration (s) | Build (s) | Size (MB) |
-|----------------------|-----------|-----------|-----------|--------------|-----------|-----------|
-| DPVS (CPU)           | 82.79% 🥇 | 92.80% 🥇| 94.94% 🥇 | 0.438s 🥈   | 27.126s   | 104.81    |
-| SymSpell             | 78.24%    | 90.11%    | 92.16%    | 0.164s 🥇    | 1.987s    | 190.31    |
-| RapidFuzz            | 79.96% 🥈 | 91.70%    | 94.42% 🥉| 81.064s      | N/A       | N/A       |
-| Jaro‑Winkler         | 79.24% 🥉 | 92.02% 🥈| 94.56% 🥈 | 79.911s      | N/A       | N/A       |
-| Damerau-Levenshtein  | 78.24%    | 92.11% 🥉| 93.92%     | 614.175s     | N/A       | N/A       |
-| Levenshtein          | 68.70%    | 84.27%    | 88.22%    | 75.773s      | N/A       | N/A       |
-| Norvig               | 79.36%    | 90.59%    | 91.28%    | 58.657s 🥉   | N/A       | N/A       |
+| Method | Top-1 (%) | Top-3 (%) | Top-5 (%) | Duration (s) | Build (s) | Size (MB) |
+|---|---|---|---|---|---|---|
+| DPVS                 | 82.58% 🥇   | 92.65% 🥇   | 95.09% 🥇   | 0.255s 🥈   | 21.383s  | 108.95    |
+| SymSpell             | 78.53%     | 90.76%     | 92.94%     | 0.170s 🥇   | 1.982s   | 190.17    |
+| RapidFuzz            | 80.10% 🥈   | 91.85%     | 94.72% 🥉   | 55.423s    | N/A      | N/A       |
+| Jaro-Winkler         | 79.68% 🥉   | 92.33% 🥈   | 94.76% 🥈   | 71.860s    | N/A      | N/A       |
+| Damerau-Levenshtein  | 79.06%     | 91.95% 🥉   | 94.47%     | 528.623s   | N/A      | N/A       |
+| Levenshtein          | 69.53%     | 85.02%     | 88.98%     | 62.813s    | N/A      | N/A       |
+| Norvig               | 78.40%     | 89.90%     | 92.10%     | 44.230s 🥉  | N/A      | N/A       |
 
 #### Top‑1 Accuracy by Error Type
 
-| Method               | Substitution | Insertion | Deletion | Transposition |
+| Method | Substitution | Insertion | Deletion | Transposition |
 |----------------------|--------------|-----------|----------|---------------|
-| DPVS                 | 71.8%        | 94.2%     | 65.8% 🥉 | 99.0% 🥇     |
-| SymSpell             | 81.5% 🥉     | 95.5% 🥉  | 51.7%    | 84.6% 🥉     |
-| RapidFuzz            | 72.5%        | 97.9% 🥇  | 78.4% 🥇| 71.1%         |
-| Jaro‑Winkler         | 60.1%        | 95.2%     | 72.0% 🥈 | 89.1% 🥈     |
-| Damerau-Levenshtein  | 82.3% 🥇     | 94.1%     | 52.6%    | 84.4%         |
-| Levenshtein          | 82.3% 🥈     | 94.2%     | 53.0%    | 46.2%         |
-| Norvig               | 80.6%        | 95.7% 🥈  | 52.8%    | 84.0%         |
+| DPVS                 |   69.3%     |   94.1%   |   67.2% 🥉 |   99.0% 🥇    |
+| SymSpell             |   80.8% 🥉    |   94.9%   |   53.9%  |   84.4%     |
+| RapidFuzz            |   71.3%     |   97.8% 🥇  |   79.8% 🥇 |   71.0%     |
+| Jaro-Winkler         |   60.2%     |   95.3% 🥈  |   73.5% 🥈 |   88.9% 🥈    |
+| Damerau-Levenshtein  |   81.7% 🥈    |   94.5%   |   55.3%  |   84.7% 🥉    |
+| Levenshtein          |   81.8% 🥇    |   94.5%   |   55.6%  |   46.4%     |
+| Norvig               |   79.9%     |   95.1% 🥉  |   54.6%  |   83.9%     |
 
 #### Top‑1 Accuracy by Error Count and Error Position
 
-| Method               | 1‑Error | 2‑Errors | Prefix  | Middle  | Suffix  |
-|----------------------|---------|----------|---------|---------|---------|
-| DPVS                 | 87.2% 🥇| 65.5% 🥈| 81.1% 🥇| 88.1% 🥇| 73.1% 🥇|
-| SymSpell             | 82.3%   | 62.4%    | 74.5% 🥉| 85.8%   | 65.8%   |
-| RapidFuzz            | 83.3% 🥈| 66.9% 🥇 | 73.4%   | 87.0% 🥈| 71.5% 🥉|
-| Jaro‑Winkler         | 82.8% 🥉| 65.4% 🥉 | 71.5%   | 86.5% 🥉| 71.6% 🥈|
-| Damerau-Levenshtein  | 82.3%   | 62.3%    | 75.3% 🥈| 86.1%   | 64.3%   |
-| Levenshtein          | 72.3%   | 54.7%    | 62.7%   | 76.8%   | 58.0%   |
-| Norvig               | 82.3%   | 62.3%    | 74.4%   | 85.8%   | 65.7%   |
+| Method | 1‑Error | 2‑Errors | Prefix | Middle | Suffix |
+|----------------------|---------|----------|--------|--------|--------|
+| DPVS                 |   87.3% 🥇 |    63.9% 🥇 |   81.1% 🥇 |   86.9% 🥈|   74.5% 🥇 |
+| SymSpell             |   82.7% |    61.7% |         74.4% 🥉|   85.9% |   66.5% |
+| RapidFuzz            |   83.8% 🥈|    65.5% 🥉 |   73.8% |   86.7% 🥉|   72.1% 🥈 |
+| Jaro-Winkler         |   83.1% 🥉 |    65.9% 🥈 |   71.8% |   87.1% 🥇|   71.6% 🥉 |
+| Damerau-Levenshtein  |   83.0% |        62.8% |   76.0% 🥈|   86.3% |   66.3% |
+| Levenshtein          |   73.3% |        54.6% |   63.9% |   76.5% |   60.1% |
+| Norvig               |   82.6% |        61.5% |   74.1% |   85.9% |   66.4% |
 
 ---
 

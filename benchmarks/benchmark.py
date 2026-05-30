@@ -4,13 +4,11 @@ import matplotlib.pyplot as plt
 from time import time
 from spellchecker import SpellChecker
 from tqdm import tqdm
-import jellyfish
 from rapidfuzz import fuzz, process
 from rapidfuzz.distance import Levenshtein, DamerauLevenshtein, JaroWinkler
 from symspellpy import SymSpell, Verbosity
 import dpvs
 from unicodedata import normalize
-import json
 from pympler import asizeof
 
 # ---------------------------
@@ -298,29 +296,58 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
                 results[name]["build_size"].append(0.0)
 
     # Print aggregated mean +/- std, include symspell build time separately
-    print("\n" + "=" * 135)
-    print(f"{'Method':<20} | {'Top-1 (%)':<15} | {'Top-3 (%)':<15} | {'Top-5 (%)':<15} | {'Duration (s)':<15} | {'Iter/s':<15} | {'Build (s)':<10} | {'Size (MB)':<10}")
-    print("-" * 135)
-
     def mean_std(arr):
         if not arr: return 0.0, 0.0
         a = np.asarray(arr)
         return a.mean(), a.std()
 
-    for _, name, _, is_batched in methods:
-        t1_mean, t1_std = mean_std(results[name]["top1"]) ; t1_mean *= 100 ; t1_std *= 100
-        t3_mean, t3_std = mean_std(results[name]["top3"]) ; t3_mean *= 100 ; t3_std *= 100
-        t5_mean, t5_std = mean_std(results[name]["top5"]) ; t5_mean *= 100 ; t5_std *= 100
+    # Calculate means for ranking
+    aggregated_results = []
+    for _, name, _, _ in methods:
+        t1_mean, t1_std = mean_std(results[name]["top1"])
+        t3_mean, t3_std = mean_std(results[name]["top3"])
+        t5_mean, t5_std = mean_std(results[name]["top5"])
         time_mean, time_std = mean_std(results[name]["time_sec"])
         iters_mean, iters_std = mean_std(results[name]["iters_sec"])
         build_mean, _ = mean_std(results[name]["build_time"])
         size_mean, _ = mean_std(results[name]["build_size"])
+        
+        aggregated_results.append({
+            "name": name,
+            "top1": t1_mean, "top1_std": t1_std,
+            "top3": t3_mean, "top3_std": t3_std,
+            "top5": t5_mean, "top5_std": t5_std,
+            "time_sec": time_mean, "time_sec_std": time_std,
+            "iters_sec": iters_mean, "iters_sec_std": iters_std,
+            "build_time": build_mean,
+            "build_size": size_mean
+        })
 
-        print(f"{name:<20} | {f'{t1_mean:>5.2f}% ±{t1_std:4.2f}':<15} | {f'{t3_mean:>5.2f}% ±{t3_std:4.2f}':<15} | {f'{t5_mean:>5.2f}% ±{t5_std:4.2f}':<15} | {f'{time_mean:>7.3f}s ±{time_std:4.3f}':<15} | {f'{iters_mean:>8.1f} ±{iters_std:<5.1f}' if is_batched else f'{iters_mean:>7.1f} ±{iters_std:<4.1f}':<15} | {f'{build_mean:>8.3f}s':<10} | {f'{size_mean:>8.2f}':<10}")
-    print("=" * 135)
+    metrics_to_rank = [
+        ('top1', True), ('top3', True), ('top5', True),
+        ('time_sec', False)
+    ]
+    medals = {r['name']: {} for r in aggregated_results}
+    for key, higher_is_better in metrics_to_rank:
+        sorted_res = sorted(aggregated_results, key=lambda x: x[key], reverse=higher_is_better)
+        for i, rank_medal in enumerate(['🥇', '🥈', '🥉']):
+            if i < len(sorted_res):
+                medals[sorted_res[i]['name']][key] = " " + rank_medal
 
-    print("\n=== Diagnostic Top-1 Accuracy Breakdown " + "=" * 83)
-    
+    # Print in the requested three-table markdown format (no iters/sec column)
+    print("\n#### Overall Accuracy and Speed\n")
+    print("| Method | Top-1 (%) | Top-3 (%) | Top-5 (%) | Duration (s) | Build (s) | Size (MB) |")
+    print("|---|---|---|---|---|---|---|")
+
+    for r in aggregated_results:
+        t1 = f"{r['top1'] * 100:.2f}%{medals[r['name']].get('top1', '')}"
+        t3 = f"{r['top3'] * 100:.2f}%{medals[r['name']].get('top3', '')}"
+        t5 = f"{r['top5'] * 100:.2f}%{medals[r['name']].get('top5', '')}"
+        d = f"{r['time_sec']:.3f}s{medals[r['name']].get('time_sec', '')}"
+        bt = f"{r['build_time']:.3f}s" if r['build_time'] > 0 else "N/A"
+        bs = f"{r['build_size']:.2f}" if r['build_size'] > 0 else "N/A"
+        print(f"| {r['name']:<20} | {t1:<10} | {t3:<10} | {t5:<10} | {d:<10} | {bt:<8} | {bs:<9} |")
+
     # helper for aggregating stats across trials
     def agg_stats(name, category, key):
         t_counts = 0
@@ -330,28 +357,65 @@ def run_benchmark(freq_dict, n_trials, n_per_trial, seed=0, save_to_file=False):
             t_top1 += trial_stat[category][key]["top1"]
         return (t_top1 / t_counts * 100) if t_counts > 0 else 0.0
 
-    print(f"{'Method':<20} | {'Sub':<7} {'Ins':<7} {'Del':<7} {'Swap':<7} | {'Prefx':<7} {'Middl':<7} {'Suffx':<7} | {'1-Edit':<7} {'2-Edits':<7}")
-    print("=" * 123)
+    # Top-1 by error type
+    print("\n#### Top‑1 Accuracy by Error Type\n")
+    print("| Method | Substitution | Insertion | Deletion | Transposition |")
+    print("|----------------------|--------------|-----------|----------|---------------|")
     for _, name, _, _ in methods:
         sub_acc = agg_stats(name, "error_type", "substitution")
         ins_acc = agg_stats(name, "error_type", "insertion")
         del_acc = agg_stats(name, "error_type", "deletion")
         swap_acc = agg_stats(name, "error_type", "swap")
-        
+        print(f"| {name:<20} | {sub_acc:>6.1f}%     | {ins_acc:>6.1f}%   | {del_acc:>6.1f}%  | {swap_acc:>6.1f}%     |")
+
+    # Top-1 by error count and position
+    print("\n#### Top‑1 Accuracy by Error Count and Error Position\n")
+    print("| Method | 1‑Error | 2‑Errors | Prefix | Middle | Suffix |")
+    print("|----------------------|---------|----------|--------|--------|--------|")
+    for _, name, _, _ in methods:
+        e1_acc = agg_stats(name, "edits", 1)
+        e2_acc = agg_stats(name, "edits", 2)
         pref_acc = agg_stats(name, "error_pos", "prefix")
         mid_acc = agg_stats(name, "error_pos", "middle")
         suf_acc = agg_stats(name, "error_pos", "suffix")
-        
-        e1_acc = agg_stats(name, "edits", 1)
-        e2_acc = agg_stats(name, "edits", 2)
-        
-        print(f"{name:<20} | {f'{sub_acc:>5.1f}%':<7} {f'{ins_acc:>5.1f}%':<7} {f'{del_acc:>5.1f}%':<7} {f'{swap_acc:>5.1f}%':<7} | {f'{pref_acc:>5.1f}%':<7} {f'{mid_acc:>5.1f}%':<7} {f'{suf_acc:>5.1f}%':<7} | {f'{e1_acc:>5.1f}%':<7} {f'{e2_acc:>5.1f}%':<7}")
-    print("=" * 123)
+        print(f"| {name:<20} | {e1_acc:>6.1f}% | {e2_acc:>7.1f}% | {pref_acc:>6.1f}% | {mid_acc:>6.1f}% | {suf_acc:>6.1f}% |")
 
     if save_to_file:
-        with open("benchmark_raw_data.json", "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=4)
-        print("\nSaved raw benchmark data to benchmark_raw_data.json")
+        with open("benchmark_results.md", "w", encoding="utf-8") as f:
+            f.write("#### Overall Accuracy and Speed\n\n")
+            f.write("| Method | Top-1 (%) | Top-3 (%) | Top-5 (%) | Duration (s) | Build (s) | Size (MB) |\n")
+            f.write("|---|---|---|---|---|---|---|\n")
+            for r in aggregated_results:
+                t1 = f"{r['top1'] * 100:.2f}%{medals[r['name']].get('top1', '')}"
+                t3 = f"{r['top3'] * 100:.2f}%{medals[r['name']].get('top3', '')}"
+                t5 = f"{r['top5'] * 100:.2f}%{medals[r['name']].get('top5', '')}"
+                d = f"{r['time_sec']:.3f}s{medals[r['name']].get('time_sec', '')}"
+                bt = f"{r['build_time']:.3f}s" if r['build_time'] > 0 else "N/A"
+                bs = f"{r['build_size']:.2f}" if r['build_size'] > 0 else "N/A"
+                f.write(f"| {r['name']} | {t1} | {t3} | {t5} | {d} | {bt} | {bs} |\n")
+
+            f.write("\n#### Top‑1 Accuracy by Error Type\n\n")
+            f.write("| Method | Substitution | Insertion | Deletion | Transposition |\n")
+            f.write("|----------------------|--------------|-----------|----------|---------------|\n")
+            for _, name, _, _ in methods:
+                sub_acc = agg_stats(name, "error_type", "substitution")
+                ins_acc = agg_stats(name, "error_type", "insertion")
+                del_acc = agg_stats(name, "error_type", "deletion")
+                swap_acc = agg_stats(name, "error_type", "swap")
+                f.write(f"| {name} | {sub_acc:.1f}% | {ins_acc:.1f}% | {del_acc:.1f}% | {swap_acc:.1f}% |\n")
+
+            f.write("\n#### Top‑1 Accuracy by Error Count and Error Position\n\n")
+            f.write("| Method | 1‑Error | 2‑Errors | Prefix | Middle | Suffix |\n")
+            f.write("|----------------------|---------|----------|--------|--------|--------|\n")
+            for _, name, _, _ in methods:
+                e1_acc = agg_stats(name, "edits", 1)
+                e2_acc = agg_stats(name, "edits", 2)
+                pref_acc = agg_stats(name, "error_pos", "prefix")
+                mid_acc = agg_stats(name, "error_pos", "middle")
+                suf_acc = agg_stats(name, "error_pos", "suffix")
+                f.write(f"| {name} | {e1_acc:.1f}% | {e2_acc:.1f}% | {pref_acc:.1f}% | {mid_acc:.1f}% | {suf_acc:.1f}% |\n")
+
+        print("\nSaved benchmark data to benchmark_results.md")
 
 # ---------------------------
 # MAIN
@@ -371,4 +435,4 @@ if __name__ == "__main__":
     
     print(f"Using {len(filtered_dict)}/{len(freq_dict)} alphabetic words for the benchmark")
     
-    run_benchmark(filtered_dict, n_trials=5, n_per_trial=5_000, seed=0, save_to_file=False)
+    run_benchmark(filtered_dict, n_trials=5, n_per_trial=5_000, seed=0, save_to_file=True)

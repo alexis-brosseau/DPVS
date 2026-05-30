@@ -1,7 +1,13 @@
 import pickle
 from enum import Enum
 import numpy as np
-import faiss        # Use `pip install faiss-cpu` or `pip install faiss-gpu` depending on your system
+import faiss
+
+try:
+    from dpvs_cy import word_vector_cython
+    HAVE_CYTHON = True
+except ImportError:
+    HAVE_CYTHON = False
 
 class IndexType(Enum):
     WORD = 1
@@ -37,7 +43,8 @@ class VectorIndex:
         
         self.vectors = None
         self.index = None
-            
+    
+    # TODO: Add GPU support for faster indexing and search using FAISS GPU resources (e.g. faiss.index_cpu_to_gpu)
     def build(self, entries: list[str]):
         """
         Build the FAISS index from the provided entries.
@@ -127,6 +134,9 @@ class VectorIndex:
         
         if w_len == 0:
             raise ValueError("The input word is empty and cannot be vectorized.")
+
+        if HAVE_CYTHON:
+            return word_vector_cython(word, self.char_idx, self.chars_len)
         
         vec_cnt = np.zeros(self.chars_len, dtype=np.float32)     # Vector based on char count
         vec_pos  = np.zeros(self.chars_len, dtype=np.float32)    # Vector based on char position
@@ -177,9 +187,9 @@ class VectorIndex:
         """
         
         words = sentence.split()
-        vecs = [self._word_vector(w) for w in words if w]
+        vecs = [self._word_vector(w.strip().lower()) for w in words if w]
         
-        if not vecs: 
+        if not vecs:
             raise ValueError("The input sentence does not contain any valid words for vectorization.")
         
         return np.mean(vecs, axis=0)
@@ -194,13 +204,11 @@ class VectorIndex:
         Returns:
             np.ndarray: Matrix containing the vertical stack of the generated vectors.
         """
-        vectors = []
         
-        for w in entries:
-            w = w.lower()
-            vectors.append(self.vectorize(w).astype(np.float32))
-
-        return np.vstack(vectors)
+        if not entries:
+            raise ValueError("The input entries list is empty and cannot be vectorized.")
+        
+        return np.vstack([ self.vectorize(e.strip().lower()) for e in entries ])
     
     def _build_faiss_index(self, metric, ef_construction, M, ef):
         """

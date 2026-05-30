@@ -47,21 +47,22 @@ After vectorizing the dictionary, we build a **FAISS HNSW index** using Manhatta
 
 ## Benchmark Highlights
 
+### Synthetic Dataset
 Here’s a quick comparison on a dictionary of ~160 000 English words (with 4+ characters), tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and transposition). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365.
 
-### Overall Accuracy and Speed
+#### Overall Accuracy and Speed
 
 | Method               | Top‑1 (%) | Top‑3 (%) | Top‑5 (%) | Duration (s) | Build (s) | Size (MB) |
 |----------------------|-----------|-----------|-----------|--------------|-----------|-----------|
-| DPVS (CPU)           | 82.79% 🥇 | 92.80% 🥇| 94.94% 🥇 | 0.438s 🥈   | 27.126    | 104.81    |
-| SymSpell             | 78.24%    | 90.11%    | 92.16%    | 0.164s 🥇    | 1.987     | 190.31    |
-| RapidFuzz            | 79.96% 🥈 | 91.70%    | 94.42% 🥉| 81.064s     | N/A       | N/A       |
+| DPVS (CPU)           | 82.79% 🥇 | 92.80% 🥇| 94.94% 🥇 | 0.438s 🥈   | 27.126s   | 104.81    |
+| SymSpell             | 78.24%    | 90.11%    | 92.16%    | 0.164s 🥇    | 1.987s    | 190.31    |
+| RapidFuzz            | 79.96% 🥈 | 91.70%    | 94.42% 🥉| 81.064s      | N/A       | N/A       |
 | Jaro‑Winkler         | 79.24% 🥉 | 92.02% 🥈| 94.56% 🥈 | 79.911s      | N/A       | N/A       |
-| Damerau-Levenshtein  | 78.24%    | 92.11% 🥉| 93.92%     | 614.175s     | N/A       | N/A  |
-| Levenshtein          | 68.70%    | 84.27%    | 88.22%    | 75.773s     | N/A       | N/A       |
+| Damerau-Levenshtein  | 78.24%    | 92.11% 🥉| 93.92%     | 614.175s     | N/A       | N/A       |
+| Levenshtein          | 68.70%    | 84.27%    | 88.22%    | 75.773s      | N/A       | N/A       |
 | Norvig               | 79.36%    | 90.59%    | 91.28%    | 58.657s 🥉   | N/A       | N/A       |
 
-### Top‑1 Accuracy by Error Type
+#### Top‑1 Accuracy by Error Type
 
 | Method               | Substitution | Insertion | Deletion | Transposition |
 |----------------------|--------------|-----------|----------|---------------|
@@ -73,7 +74,7 @@ Here’s a quick comparison on a dictionary of ~160 000 English words (with 4+ c
 | Levenshtein          | 82.3% 🥈     | 94.2%     | 53.0%    | 46.2%         |
 | Norvig               | 80.6%        | 95.7% 🥈  | 52.8%    | 84.0%         |
 
-### Top‑1 Accuracy by Error Count and Error Position
+#### Top‑1 Accuracy by Error Count and Error Position
 
 | Method               | 1‑Error | 2‑Errors | Prefix  | Middle  | Suffix  |
 |----------------------|---------|----------|---------|---------|---------|
@@ -84,6 +85,15 @@ Here’s a quick comparison on a dictionary of ~160 000 English words (with 4+ c
 | Damerau-Levenshtein  | 82.3%   | 62.3%    | 75.3% 🥈| 86.1%   | 64.3%   |
 | Levenshtein          | 72.3%   | 54.7%    | 62.7%   | 76.8%   | 58.0%   |
 | Norvig               | 82.3%   | 62.3%    | 74.4%   | 85.8%   | 65.7%   |
+
+### Real-World Human Error Benchmark (Birkbeck Spelling Error Corpus)
+Here’s a comparison on the same dictionary of ~160 000 English words, tested with the Birkbeck Spelling Error Corpus. This dataset consists of non-synthetic human misspellings including heavy phonetic mutations, dysgraphia and multi-error handwriting slips. Tested on a Ryzen 9 365.
+
+| Method              | Top‑1 (%) | Top‑5 (%) | Top‑10 (%) | Top‑25 (%) | Top‑100 (%) | Duration (s) | Build (s) | Size (MB) |
+| ------------------- | --------- | --------- | ---------- | ---------- | ----------- | ------------ | --------- | --------- |
+| DPVS (CPU)          | 30.25%    | 48.29%    | 54.94%     | 63.05%     | 72.49%      | 4.293s       | 29.409s   | 110.06    |
+| SymSpell            | 34.05%    | 48.92%    | 51.94%     | 41.66%     | 57.70%      | 4.239s       | 5.030s    | 3568.23   |
+| Damerau-Levenshtein | 29.20%    | 48.10%    | 55.56%     | 63.92%     | 73.18%      | 5182.434s    | N/A       | N/A       |
 
 ---
 

@@ -47,8 +47,17 @@ After vectorizing the dictionary, we build a **FAISS HNSW index** using Manhatta
 
 ## Benchmark Highlights
 
+### Real-World Human Error Benchmark (Birkbeck Spelling Error Corpus)
+Here’s a comparison on a dictionary of ~160 000 English words, tested with the Birkbeck Spelling Error Corpus. This dataset consists of non-synthetic human misspellings including heavy phonetic mutations, dysgraphia and multi-error handwriting slips. Tested on a Ryzen 9 365.
+
+| Method              | Top‑1 (%) | Top‑5 (%) | Top‑10 (%) | Top‑25 (%) | Top‑100 (%) | Duration (s) | Build (s) | Size (MB) |
+| ------------------- | --------- | --------- | ---------- | ---------- | ----------- | ------------ | --------- | --------- |
+| DPVS (CPU)          | 30.25%    | 48.29%    | 54.94%     | 63.05%     | 72.49%      | 4.293s       | 29.409s   | 110.06    |
+| SymSpell            | 34.05%    | 48.92%    | 51.94%     | 41.66%     | 57.70%      | 4.239s       | 5.030s    | 3568.23   |
+| Damerau-Levenshtein | 29.20%    | 48.10%    | 55.56%     | 63.92%     | 73.18%      | 5182.434s    | N/A       | N/A       |
+
 ### Synthetic Dataset
-Here’s a quick comparison on a dictionary of ~160 000 English words (with 4+ characters), tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and transposition). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365.
+Here’s a quick comparison on the same dictionary of ~160 000 English words (with 4+ characters), tested with 5 000 randomly generated misspellings (25% of substitutions, insertions, deletions, and transposition). All measurements are averaged over 5 trials. Tested on a Ryzen 9 365.
 
 #### Overall Accuracy and Speed
 
@@ -85,15 +94,6 @@ Here’s a quick comparison on a dictionary of ~160 000 English words (with 4+ c
 | Damerau-Levenshtein  | 82.3%   | 62.3%    | 75.3% 🥈| 86.1%   | 64.3%   |
 | Levenshtein          | 72.3%   | 54.7%    | 62.7%   | 76.8%   | 58.0%   |
 | Norvig               | 82.3%   | 62.3%    | 74.4%   | 85.8%   | 65.7%   |
-
-### Real-World Human Error Benchmark (Birkbeck Spelling Error Corpus)
-Here’s a comparison on the same dictionary of ~160 000 English words, tested with the Birkbeck Spelling Error Corpus. This dataset consists of non-synthetic human misspellings including heavy phonetic mutations, dysgraphia and multi-error handwriting slips. Tested on a Ryzen 9 365.
-
-| Method              | Top‑1 (%) | Top‑5 (%) | Top‑10 (%) | Top‑25 (%) | Top‑100 (%) | Duration (s) | Build (s) | Size (MB) |
-| ------------------- | --------- | --------- | ---------- | ---------- | ----------- | ------------ | --------- | --------- |
-| DPVS (CPU)          | 30.25%    | 48.29%    | 54.94%     | 63.05%     | 72.49%      | 4.293s       | 29.409s   | 110.06    |
-| SymSpell            | 34.05%    | 48.92%    | 51.94%     | 41.66%     | 57.70%      | 4.239s       | 5.030s    | 3568.23   |
-| Damerau-Levenshtein | 29.20%    | 48.10%    | 55.56%     | 63.92%     | 73.18%      | 5182.434s    | N/A       | N/A       |
 
 ---
 
